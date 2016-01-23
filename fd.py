@@ -21,7 +21,7 @@ def _extract_names_bboxes(bname):
     df = read_csv(bname, sep=' ', names=['Name', 'BBox'])
     df['Name'] = map(lambda n: os.path.join(
         os.path.dirname(bname), n), df['Name'])
-    df['BBox'] = map(lambda ks: [int(k)
+    df['BBox'] = map(lambda ks: [float(k)
                                  for k in ks.split(',')], df['BBox'])
     return df
 
