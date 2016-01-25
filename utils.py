@@ -3,7 +3,33 @@ import cv2
 from skimage.io import imread
 
 
-def load_im(name):
+def _extract_names_bboxes(bname):
+    df = read_csv(bname, sep=' ', names=['Name', 'BBox'])
+    df['Name'] = map(lambda n: os.path.join(
+        os.path.dirname(bname), n), df['Name'])
+    df['BBox'] = map(lambda ks: [np.float32(k)
+                                 for k in ks.split(',')], df['BBox'])
+    return df
+
+
+def get_file_list(folder):
+    names = os.listdir(folder)
+    fnames = []
+    bboxes = []
+    bbox_names = map(lambda name: os.path.join(
+        folder, name, '_bboxes.txt'), names)
+    with Parallel(n_jobs=-1) as parallel:
+        dfs = parallel(delayed(_extract_names_bboxes)(bname)
+                       for bname in bbox_names)
+    df = pd.concat(dfs, ignore_index=True)
+    df['Flag'] = df['Name'].map(lambda x: True if os.path.exists(x) else False)
+    print "Initial number of images:", df.count()
+    df = df[df['Flag'] == True]
+    print "Total number of existing images:", df.count()
+    return df['Name'].values, df['BBox'].values
+
+
+def load_im_chw(name):
     im = imread(name)
     im = np.transpose(im, axes=[2, 0, 1])
     return im
