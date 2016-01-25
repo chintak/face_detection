@@ -1,5 +1,12 @@
 import numpy as np
 import cv2
+from skimage.io import imread
+
+
+def load_im(name):
+    im = imread(name)
+    im = np.transpose(im, axes=[2, 0, 1])
+    return im
 
 
 def create_fixed_image_shape(img, frame_size=(200, 200, 3), random_fill=True, mode='crop'):
