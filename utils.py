@@ -1,13 +1,17 @@
 import numpy as np
 import cv2
 from skimage.io import imread
+import os
+from joblib import Parallel, delayed
+import pandas as pd
+from pandas import read_csv
 
 
 def _extract_names_bboxes(bname):
     df = read_csv(bname, sep=' ', names=['Name', 'BBox'])
     df['Name'] = map(lambda n: os.path.join(
         os.path.dirname(bname), n), df['Name'])
-    df['BBox'] = map(lambda ks: [np.float32(k)
+    df['BBox'] = map(lambda ks: [(np.float32(k) - 0.5) / 0.5
                                  for k in ks.split(',')], df['BBox'])
     return df
 
@@ -23,9 +27,9 @@ def get_file_list(folder):
                        for bname in bbox_names)
     df = pd.concat(dfs, ignore_index=True)
     df['Flag'] = df['Name'].map(lambda x: True if os.path.exists(x) else False)
-    print "Initial number of images:", df.count()
+    print "Initial number of images:", df['Name'].count()
     df = df[df['Flag'] == True]
-    print "Total number of existing images:", df.count()
+    print "Total number of existing images:", df['Name'].count()
     return df['Name'].values, df['BBox'].values
 
 
