@@ -4,6 +4,7 @@ import pandas as pd
 from pandas import read_csv
 from skimage.io import imread
 from joblib import delayed, Parallel
+import argparse
 import time
 
 from utils import get_file_list
@@ -43,5 +44,7 @@ def train(train_folder, config='nnet_three_conv_layer', max_epochs=30):
         pickle.dump(nnet, f, -1)
 
 if __name__ == '__main__':
-    train_folder = 'train/'
-    train(train_folder)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('train_folder', type=str)
+    args = parser.parse_args()
+    train(args.train_folder)
