@@ -5,13 +5,16 @@ from pandas import read_csv
 from skimage.io import imread
 from joblib import delayed, Parallel
 import argparse
-import time
+from pytz import timezone
+from datetime import datetime
 
 from utils import get_file_list
 from models import nnet_three_conv_layer
 
 
 mode = 'debug'
+mumbai = timezone('Asia/Kolkata')
+m_time = datetime.now(mumbai)
 
 
 def train(train_folder, config='nnet_three_conv_layer', max_epochs=30):
@@ -26,15 +29,14 @@ def train(train_folder, config='nnet_three_conv_layer', max_epochs=30):
     print "Dataset loaded, shape:", X_t.shape, y_t.shape
     # nnet.fit(X_t, y_t)
     # Train loop, save params every 2 epochs
-    param_dump_folder = './model_%s' % time.strftime(
-        "%m_%d_%H_%M_%S", time.gmtime())
+    param_dump_folder = './model_%s' % m_time.strftime("%m_%d_%H_%M_%S")
     if not os.path.exists(param_dump_folder):
         os.mkdir(param_dump_folder)
     for i in range(1, max_epochs, 5):
         try:
             nnet.fit(X_t, y_t, epochs=5)
             nnet.save_params_to(os.path.join(
-                param_dump_folder, 'model_%d.pkl' % (i + 1)))
+                param_dump_folder, 'model_%d.pkl' % len(nnet.train_history_)))
         except KeyboardInterrupt:
             break
     # Training for 1000 epochs will take a while.  We'll pickle the

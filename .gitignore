@@ -1,5 +1,8 @@
 # Byte-compiled / optimized / DLL files
-train/
+*.pkl*
+*.pickle*
+train*/
+val*/
 model_*/
 .ipynb_checkpoints
 __pycache__/
