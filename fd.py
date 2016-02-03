@@ -12,12 +12,13 @@ from utils import get_file_list
 from models import nnet_three_conv_layer
 
 
-mode = 'debug'
+# mode = 'debug'
+mode = 'release'
 mumbai = timezone('Asia/Kolkata')
 m_time = datetime.now(mumbai)
 
 
-def train(train_folder, config='nnet_three_conv_layer', max_epochs=30):
+def train(train_folder, config='nnet_three_conv_layer'):
     nnet = globals()[config]()
     fnames, bboxes = get_file_list(train_folder)
     y = np.array(list(bboxes), dtype=np.float32)
@@ -32,7 +33,7 @@ def train(train_folder, config='nnet_three_conv_layer', max_epochs=30):
     param_dump_folder = './model_%s' % m_time.strftime("%m_%d_%H_%M_%S")
     if not os.path.exists(param_dump_folder):
         os.mkdir(param_dump_folder)
-    for i in range(1, max_epochs, 5):
+    for i in range(1, nnet.max_epochs, 5):
         try:
             nnet.fit(X_t, y_t, epochs=5)
             nnet.save_params_to(os.path.join(
