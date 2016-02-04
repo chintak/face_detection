@@ -3,6 +3,7 @@ import theano
 import theano.tensor as T
 import lasagne
 from lasagne import layers
+from lasagne.init import Orthogonal
 from lasagne.updates import nesterov_momentum
 from nolearn.lasagne import NeuralNet
 from lazy_batch_iterator import LazyBatchIterator
@@ -48,26 +49,38 @@ def nnet_three_conv_layer():
         conv4_2_num_filters=196, conv4_2_filter_size=(2, 2),
         conv4_3_num_filters=196, conv4_3_filter_size=(2, 2),
         pool4_pool_size=(2, 2),
+        conv1_W=Orthogonal(gain=1.0),
+        conv2_1_W=Orthogonal(gain=1.0),
+        conv2_2_W=Orthogonal(gain=1.0),
+        conv3_1_W=Orthogonal(gain=1.0),
+        conv3_2_W=Orthogonal(gain=1.0),
+        conv3_3_W=Orthogonal(gain=1.0),
+        conv4_1_W=Orthogonal(gain=1.0),
+        conv4_2_W=Orthogonal(gain=1.0),
+        conv4_3_W=Orthogonal(gain=1.0),
         # conv5_num_filters=128, conv5_filter_size=(2, 2), pool5_pool_size=(2, 2),
         # conv6_num_filters=128, conv6_filter_size=(2, 2), pool6_pool_size=(2,
         # 2),
         dense1_num_units=2048, dense2_num_units=1024, dense3_num_units=512,
-        dense1_nonlinearity=lasagne.nonlinearities.rectify,
-        dense2_nonlinearity=lasagne.nonlinearities.rectify,
+        # dense1_nonlinearity=lasagne.nonlinearities.rectify,
+        # dense2_nonlinearity=lasagne.nonlinearities.rectify,
         dense3_nonlinearity=lasagne.nonlinearities.sigmoid,
+        dense1_W=Orthogonal(gain=1.0),
+        dense2_W=Orthogonal(gain=1.0),
+        dense3_W=Orthogonal(gain=1.0),
         # output layer uses identity function
         output_nonlinearity=None,
         output_num_units=4,  # 30 target values
 
         # optimization method:
-        # update=nesterov_momentum,
+        update=nesterov_momentum,
         update_learning_rate=0.01,
-        # update_momentum=0.975,
+        update_momentum=0.975,
 
         batch_iterator_train=LazyBatchIterator(batch_size=24),
         batch_iterator_test=LazyBatchIterator(batch_size=24),
         regression=True,  # flag to indicate we're dealing with regression problem
-        max_epochs=30,  # we want to train this many epochs
+        max_epochs=3,  # we want to train this many epochs
         verbose=1,
     )
     return net1

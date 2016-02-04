@@ -12,7 +12,7 @@ from utils import get_file_list
 from models import nnet_three_conv_layer
 
 
-debug = True
+debug = False  # True
 mumbai = timezone('Asia/Kolkata')
 m_time = datetime.now(mumbai)
 
@@ -24,7 +24,7 @@ def train(train_folder, config='nnet_three_conv_layer'):
     assert (np.any(np.isnan(y)) or np.any(np.isinf(y))
             ) == False, "Invalid `y` detected"
     X = np.array(list(fnames))
-    sample = 100 if debug else X.shape[0]
+    sample = 500 if debug else X.shape[0]
     X_t, y_t = X[:sample], y[:sample, :]
     print "Dataset loaded, shape:", X_t.shape, y_t.shape
     # nnet.fit(X_t, y_t)
