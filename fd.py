@@ -12,13 +12,17 @@ from utils import get_file_list
 from models import nnet_three_conv_layer
 
 
-debug = False  # True
 mumbai = timezone('Asia/Kolkata')
 m_time = datetime.now(mumbai)
 
 
-def train(train_folder, config='nnet_three_conv_layer'):
+def train(train_folder, max_epochs=30, name=None, config='nnet_three_conv_layer', debug=True):
+    print 'Model name: %s' % name
+    print 'Config: %s' % config
+    print 'Debug mode:', debug
+    print 'Max num epochs: %d' % max_epochs
     nnet = globals()[config]()
+    nnet.max_epochs = max_epochs
     fnames, bboxes = get_file_list(train_folder)
     y = np.array(list(bboxes), dtype=np.float32)
     assert (np.any(np.isnan(y)) or np.any(np.isinf(y))
@@ -29,7 +33,8 @@ def train(train_folder, config='nnet_three_conv_layer'):
     print "Dataset loaded, shape:", X_t.shape, y_t.shape
     # nnet.fit(X_t, y_t)
     # Train loop, save params every 2 epochs
-    param_dump_folder = './model_%s' % m_time.strftime("%m_%d_%H_%M_%S")
+    param_dump_folder = './model_%s' % (m_time.strftime(
+        "%m_%d_%H_%M_%S") if name is None else name)
     if not debug:
         if not os.path.exists(param_dump_folder):
             os.mkdir(param_dump_folder)
@@ -51,5 +56,9 @@ def train(train_folder, config='nnet_three_conv_layer'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('train_folder', type=str)
+    parser.add_argument('-e', '--epochs', type=int)
+    parser.add_argument('-n', '--name', type=str)
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
-    train(args.train_folder)
+    train(args.train_folder, max_epochs=args.epochs,
+          name=args.name, debug=args.debug)

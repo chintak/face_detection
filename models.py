@@ -77,8 +77,8 @@ def nnet_three_conv_layer():
         update_learning_rate=0.01,
         update_momentum=0.975,
 
-        batch_iterator_train=LazyBatchIterator(batch_size=24),
-        batch_iterator_test=LazyBatchIterator(batch_size=24),
+        batch_iterator_train=LazyBatchIterator(batch_size=96),
+        batch_iterator_test=LazyBatchIterator(batch_size=96),
         regression=True,  # flag to indicate we're dealing with regression problem
         max_epochs=3,  # we want to train this many epochs
         verbose=1,
