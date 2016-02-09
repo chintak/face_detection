@@ -4,15 +4,16 @@ import cv2
 
 
 def plot_face_bb(p, bb, scale=True, path=True):
-    im = p
     if path:
         im = cv2.imread(p)
+    else:
+        im = p[:, :, ::-1]
     if scale:
         h, w, _ = im.shape
         cv2.rectangle(im, (int(bb[0] * h), int(bb[1] * w)),
                       (int(bb[2] * h), int(bb[3] * w)),
                       (255, 255, 0), thickness=4)
-        print bb * np.asarray([h, w, h, w])
+        # print bb * np.asarray([h, w, h, w])
     else:
         cv2.rectangle(im, (int(bb[0]), int(bb[1])), (int(bb[2]), int(bb[3])),
                       (255, 255, 0), thickness=4)

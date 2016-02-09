@@ -5,6 +5,7 @@ import os
 from joblib import Parallel, delayed
 import pandas as pd
 from pandas import read_csv
+import glob
 
 
 def _extract_names_bboxes(bname):
@@ -43,7 +44,8 @@ def create_fixed_image_shape(img, frame_size=(200, 200, 3), random_fill=True, mo
     if mode == 'fit':
         X1, Y1, _ = frame_size
         if random_fill:
-            image_frame = np.random.randint(0, high=255, size=frame_size)
+            image_frame = np.random.randint(
+                0, high=255, size=frame_size).astype(np.uint8)
         else:
             image_frame = np.zeros(frame_size, dtype='uint8')
 
