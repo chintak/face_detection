@@ -7,7 +7,7 @@ def plot_face_bb(p, bb, scale=True, path=True):
     if path:
         im = cv2.imread(p)
     else:
-        im = p[:, :, ::-1]
+        im = cv2.cvtColor(p, cv2.COLOR_RGB2BGR)
     if scale:
         h, w, _ = im.shape
         cv2.rectangle(im, (int(bb[0] * h), int(bb[1] * w)),

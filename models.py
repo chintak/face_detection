@@ -6,8 +6,10 @@ from lasagne import layers
 from lasagne.init import Orthogonal
 from lasagne.updates import nesterov_momentum
 from nolearn.lasagne import NeuralNet
+
 from nolearn.lasagne import BatchIterator
 from lazy_batch_iterator import LazyBatchIterator
+from augment_batch_iterator import AugmentBatchIterator
 
 
 def nnet_4c3d_1233_convs_layer(batch_iterator="BatchIterator", max_epochs=30):
