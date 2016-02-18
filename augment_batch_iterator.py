@@ -19,26 +19,30 @@ class AugmentBatchIterator(BatchIterator):
         self.MIN_FACE_SIZE = 64
         self.rng_seeder = np.random.RandomState(seed=1234)
 
-    def compute_scale_factor(self, face_width, hc, wc):
+    def compute_scale_factor(self, img, face_width, hc, wc, high_scale=None, low_scale=None):
         # Possible scales of computation
-        high_scale = self.MAX_FACE_SIZE / 2 / face_width
-        low_scale = self.MIN_FACE_SIZE / 2 / face_width
+        assert high_scale > low_scale, "Same scale detected %.3f, %.3f" % (
+            low_scale, high_scale)
+        high_scale = high_scale or min(high_scale, self.MAX_FACE_SIZE)
+        high_scale = high_scale / 2. / face_width
+        low_scale = low_scale or max(low_scale, self.MIN_FACE_SIZE)
+        low_scale = low_scale / 2. / face_width
+        assert high_scale > low_scale, ""
         scale_comp = self.rng.choice(
             np.arange(low_scale, high_scale, (high_scale - low_scale) / 100), 1)[0]
 
         new_face_width = round(face_width * scale_comp)
         swc, shc = round(wc * scale_comp), round(hc * scale_comp)
-        return scale_comp, new_face_width, shc, swc
+        res = cv2.resize(img, None, fx=scale_comp, fy=scale_comp)
+        return res, new_face_width, shc, swc
 
-    def compute_translation(self, res, new_face_width, shc, swc):
+    def compute_translation(self, face_width, shc, swc, min_pad=None):
         # Possible location of the face
-        h, w, _ = res.shape
         h0, w0, _ = self.img_size
-        min_pad = new_face_width + 5
+        min_pad = min_pad or face_width + 5
         lw, lh, hw, hh = (min(min_pad, w0 - min_pad), min(min_pad, h0 - min_pad),
                           max(min_pad, w0 - min_pad), max(min_pad, h0 - min_pad))
-        twc = self.rng.randint(lw, hw, 2)[0]
-        thc = self.rng.randint(lh, hh, 1)[0]
+        twc, thc = self.rng.randint(lw, hw, 2)
         return thc, twc
 
     def copy_source_to_target(self, res, new_face_width, shc, swc, thc, twc):
@@ -68,12 +72,20 @@ class AugmentBatchIterator(BatchIterator):
     def get_scaled_translated_img_bb(self, name, bb):
         im = imread(name)
         img = cv2.cvtColor(im, cv2.COLOR_RGB2BGR)
+        h0, w0, _ = self.img_size
         wc, hc = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
         face_width = (bb[3] - bb[1]) / 2
-        scale_comp, new_face_width, shc, swc = self.compute_scale_factor(
-            face_width, hc, wc)
-        res = cv2.resize(img, None, fx=scale_comp, fy=scale_comp)
-        thc, twc = self.compute_translation(res, new_face_width, shc, swc)
+        # Old approach: scale and then translate
+        # res, new_face_width, shc, swc = self.compute_scale_factor(
+        #     img, face_width, hc, wc)
+        # thc, twc = self.compute_translation(new_face_width, shc, swc)
+        # New approach: translate and then scale
+        thc, twc = self.compute_translation(face_width, hc, wc,
+                                            min_pad=self.MIN_FACE_SIZE + 10)
+        high_scale = np.min([thc - 5, h0 - thc - 5, twc - 5, w0 - twc - 5])
+        res, new_face_width, shc, swc = self.compute_scale_factor(
+            img, face_width, hc, wc,
+            high_scale=high_scale, low_scale=None)
         out_bgr, new_bb = self.copy_source_to_target(res, new_face_width,
                                                      shc, swc, thc, twc)
 
