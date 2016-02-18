@@ -39,8 +39,13 @@ class AugmentBatchIterator(BatchIterator):
                           max(min_pad, w0 - min_pad), max(min_pad, h0 - min_pad))
         twc = self.rng.randint(lw, hw, 2)[0]
         thc = self.rng.randint(lh, hh, 1)[0]
+        return thc, twc
+
+    def copy_source_to_target(self, res, new_face_width, shc, swc, thc, twc):
         # Compute the top left and bottom right coordinates for source and
         # target imgs
+        h, w, _ = res.shape
+        h0, w0, _ = self.img_size
         sfh = shc - thc
         tfh = int(0 if sfh > 0 else abs(sfh))
         sfh = int(0 if sfh < 0 else sfh)
@@ -68,8 +73,10 @@ class AugmentBatchIterator(BatchIterator):
         scale_comp, new_face_width, shc, swc = self.compute_scale_factor(
             face_width, hc, wc)
         res = cv2.resize(img, None, fx=scale_comp, fy=scale_comp)
-        out_bgr, new_bb = self.compute_translation(
-            res, new_face_width, shc, swc)
+        thc, twc = self.compute_translation(res, new_face_width, shc, swc)
+        out_bgr, new_bb = self.copy_source_to_target(res, new_face_width,
+                                                     shc, swc, thc, twc)
+
         log = "%.1f,%.1f,%.0f\n" % (
             (new_bb[1] + new_bb[3]) / 2, (new_bb[0] + new_bb[2]) / 2, new_face_width * 2)
         with open('aug.csv', mode='a', buffering=0) as f:
@@ -96,6 +103,7 @@ def load_augment_im(self, name=None, bb=None):
     self.rng = np.random.RandomState(seed=seed)
     out, new_bb = self.get_scaled_translated_img_bb(name, bb)
     x = np.transpose(out, [2, 0, 1])
-    y = (new_bb / self.img_size[0] - 0.5) / 0.5
+    y = new_bb / self.img_size[0]  # Range: 0 to 1
+    # y = (new_bb / self.img_size[0] - 0.5) / 0.5  # Range: -1 to 1
 
     return (x, y)
