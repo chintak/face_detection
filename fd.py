@@ -12,7 +12,7 @@ from datetime import datetime
 import cPickle as pickle
 
 from utils import get_file_list
-from models import nnet_4c3d_1233_convs_layer, nnet_4c3d_1234_convs_layer
+from models import nnet_4c3d_1233_convs_layer, nnet_4c3d_1234_convs_layer, save_model_params
 
 mumbai = timezone('Asia/Kolkata')
 m_time = datetime.now(mumbai)
@@ -20,36 +20,40 @@ m_time = datetime.now(mumbai)
 
 def train(X, y, config, max_epochs, batch_iterator='BatchIterator',
           pretrained_model=None, name=None, debug=True):
+    # print globals()['net_name']
+    global net_name
     sample = 500 if debug else X.shape[0]
     X_t, y_t = X[:sample], y[:sample, :]
     param_dump_folder = './model_%s' % (m_time.strftime(
         "%m_%d_%H_%M_%S") if name is None else name)
+
     print 'Model name: %s' % param_dump_folder
     print 'Debug mode:', debug
+    debug = False
+    # Load the net and add a function to save the params after every epoch
     nnet = globals()[config](batch_iterator, max_epochs)
+    func_save_model = lambda n, h: save_model_params(
+        n, h, param_dump_folder, debug)
+    nnet.on_epoch_finished.append(func_save_model)
+
     if pretrained_model is not None:
         pretrained_weights = pickle.load(open(pretrained_model, 'rb'))
         nnet.load_params_from(pretrained_weights)
     print 'Config: %s' % config
     print 'Max num epochs: %d' % nnet.max_epochs
     print "Dataset loaded, shape:", X_t.shape, y_t.shape
-    # Train loop, save params every 5 epochs
+    # Train
     if not debug:
         if not os.path.exists(param_dump_folder):
             os.mkdir(param_dump_folder)
-    for i in range(1, nnet.max_epochs, 5):
-        try:
-            nnet.fit(X_t, y_t, epochs=5)
-            if not debug:
-                nnet.save_params_to(os.path.join(
-                    param_dump_folder, 'model_%d.pkl' % len(nnet.train_history_)))
-        except KeyboardInterrupt:
-            break
-    # Training for 1000 epochs will take a while.  We'll pickle the
-    # trained model so that we can load it back later:
+    try:
+        nnet.fit(X_t, y_t)
+    except KeyboardInterrupt:
+        pass
+    debug = True
     if not debug:
         nnet.save_params_to(os.path.join(
-            param_dump_folder, 'model_%d.pkl' % len(nnet.train_history_)))
+            param_dump_folder, 'model_final.pkl'))
         with open(os.path.join(param_dump_folder, 'full_nnet.pkl'), 'wb') as f:
             pickle.dump(nnet, f, -1)
 

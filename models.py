@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import theano
 import theano.tensor as T
 import lasagne
@@ -11,6 +12,113 @@ import matplotlib.pyplot as plt
 from nolearn.lasagne import BatchIterator
 from lazy_batch_iterator import LazyBatchIterator
 from augment_batch_iterator import AugmentBatchIterator
+
+
+def intersection_over_union_loss(predictions, targets):
+    pass
+
+
+def nnet_4c3d_1234_convs_layer(batch_iterator="BatchIterator", max_epochs=30):
+    custom_batch_iterator = globals()[batch_iterator]
+    net1 = NeuralNet(
+        layers=[
+            ('input', layers.InputLayer),
+            ('conv1_1', layers.Conv2DLayer),
+            ('conv1_2', layers.Conv2DLayer),
+            ('pool1', layers.MaxPool2DLayer),
+            ('conv2_1', layers.Conv2DLayer),
+            ('conv2_2', layers.Conv2DLayer),
+            ('pool2', layers.MaxPool2DLayer),
+            ('conv3_1', layers.Conv2DLayer),
+            ('conv3_2', layers.Conv2DLayer),
+            ('conv3_3', layers.Conv2DLayer),
+            ('pool3', layers.MaxPool2DLayer),
+            ('conv4_1', layers.Conv2DLayer),
+            ('conv4_2', layers.Conv2DLayer),
+            ('conv4_3', layers.Conv2DLayer),
+            ('conv4_4', layers.Conv2DLayer),
+            ('pool4', layers.MaxPool2DLayer),
+            ('dense1', layers.DenseLayer),
+            ('drop1', layers.DropoutLayer),
+            ('dense2', layers.DenseLayer),
+            ('drop2', layers.DropoutLayer),
+            ('dense3', layers.DenseLayer),
+            ('drop3', layers.DropoutLayer),
+            ('output', layers.DenseLayer),
+        ],
+        # layer parameters:
+        input_shape=(None, 3, 256, 256),
+        conv1_1_num_filters=86, conv1_1_filter_size=(5, 5), conv1_1_stride=(2, 2),
+        conv1_2_num_filters=104, conv1_2_filter_size=(3, 3), conv1_2_pad=(1, 1), pool1_pool_size=(2, 2), pool1_stride=(2, 2),
+        conv2_1_num_filters=128, conv2_1_filter_size=(3, 3), conv2_1_pad=(1, 1),
+        conv2_2_num_filters=128, conv2_2_filter_size=(3, 3), conv2_2_pad=(1, 1),
+        pool2_pool_size=(3, 3), pool2_stride=(2, 2),
+        conv3_1_num_filters=256, conv3_1_filter_size=(3, 3), conv3_1_pad=(1, 1),
+        conv3_2_num_filters=256, conv3_2_filter_size=(3, 3), conv3_2_pad=(1, 1),
+        conv3_3_num_filters=256, conv3_3_filter_size=(3, 3), conv3_3_pad=(1, 1),
+        pool3_pool_size=(3, 3), pool3_stride=(2, 2),
+        conv4_1_num_filters=196, conv4_1_filter_size=(3, 3), conv4_1_pad=(1, 1),
+        conv4_2_num_filters=196, conv4_2_filter_size=(3, 3), conv4_2_pad=(1, 1),
+        conv4_3_num_filters=196, conv4_3_filter_size=(3, 3), conv4_3_pad=(1, 1),
+        conv4_4_num_filters=196, conv4_4_filter_size=(3, 3), conv4_4_pad=(1, 1),
+        pool4_pool_size=(2, 2), pool4_stride=(2, 2),
+        conv1_1_W=Orthogonal(gain=1.0),
+        conv1_2_W=Orthogonal(gain=1.0),
+        conv2_1_W=Orthogonal(gain=1.0),
+        conv2_2_W=Orthogonal(gain=1.0),
+        conv3_1_W=Orthogonal(gain=1.0),
+        conv3_2_W=Orthogonal(gain=1.0),
+        conv3_3_W=Orthogonal(gain=1.0),
+        conv4_1_W=Orthogonal(gain=1.0),
+        conv4_2_W=Orthogonal(gain=1.0),
+        conv4_3_W=Orthogonal(gain=1.0),
+        conv4_4_W=Orthogonal(gain=1.0),
+
+        dense1_num_units=4096, drop1_p=0.5,
+        dense2_num_units=2048, drop2_p=0.5,
+        dense3_num_units=512, drop3_p=0.5,
+        dense3_nonlinearity=lasagne.nonlinearities.sigmoid,
+        # output layer uses identity function
+        output_nonlinearity=None,
+        output_num_units=4,
+
+        # optimization method:
+        update=nesterov_momentum,
+        update_learning_rate=0.001,
+        update_momentum=0.9,
+
+        batch_iterator_train=custom_batch_iterator(batch_size=32),
+        batch_iterator_test=custom_batch_iterator(batch_size=32),
+        on_epoch_finished=[plot_learning_curve],
+        regression=True,
+        max_epochs=max_epochs,
+        verbose=1,
+    )
+    return net1
+
+
+def save_model_params(net, history, folder, debug=True):
+    if not debug:
+        net.save_params_to(os.path.join(
+            folder, 'model_%d.pkl' % len(history)))
+
+
+def plot_learning_curve(_, history, save=True):
+    arr = np.asarray(
+        map(lambda k: [k['epoch'], k['train_loss'], k['valid_loss']], history))
+    plt.figure()
+    plt.plot(arr[:, 0], arr[:, 1], 'r', marker='o',
+             label='Training loss', linewidth=2.0)
+    plt.plot(arr[:, 0], arr[:, 2], 'b', marker='o',
+             label='Validation loss', linewidth=2.0)
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.ylim([0.0, np.max(arr[:, 1:]) * 1.3])
+    plt.title('Learning curve')
+    plt.legend()
+    if save:
+        plt.savefig('learning_curve.png')
+        plt.close()
 
 
 def nnet_4c3d_1233_convs_layer(batch_iterator="BatchIterator", max_epochs=30):
@@ -83,96 +191,3 @@ def nnet_4c3d_1233_convs_layer(batch_iterator="BatchIterator", max_epochs=30):
         verbose=1,
     )
     return net1
-
-
-def nnet_4c3d_1234_convs_layer(batch_iterator="BatchIterator", max_epochs=30):
-    custom_batch_iterator = globals()[batch_iterator]
-    net1 = NeuralNet(
-        layers=[
-            ('input', layers.InputLayer),
-            ('conv1_1', layers.Conv2DLayer),
-            ('conv1_2', layers.Conv2DLayer),
-            ('pool1', layers.MaxPool2DLayer),
-            ('conv2_1', layers.Conv2DLayer),
-            ('conv2_2', layers.Conv2DLayer),
-            ('pool2', layers.MaxPool2DLayer),
-            ('conv3_1', layers.Conv2DLayer),
-            ('conv3_2', layers.Conv2DLayer),
-            ('conv3_3', layers.Conv2DLayer),
-            ('pool3', layers.MaxPool2DLayer),
-            ('conv4_1', layers.Conv2DLayer),
-            ('conv4_2', layers.Conv2DLayer),
-            ('conv4_3', layers.Conv2DLayer),
-            ('conv4_4', layers.Conv2DLayer),
-            ('pool4', layers.MaxPool2DLayer),
-            ('dense1', layers.DenseLayer),
-            ('dense2', layers.DenseLayer),
-            ('dense3', layers.DenseLayer),
-            ('output', layers.DenseLayer),
-        ],
-        # layer parameters:
-        input_shape=(None, 3, 256, 256),
-        conv1_1_num_filters=86, conv1_1_filter_size=(5, 5), conv1_1_stride=(2, 2),
-        conv1_2_num_filters=104, conv1_2_filter_size=(3, 3), conv1_2_pad=(1, 1), pool1_pool_size=(2, 2), pool1_stride=(2, 2),
-        conv2_1_num_filters=128, conv2_1_filter_size=(3, 3), conv2_1_pad=(1, 1),
-        conv2_2_num_filters=128, conv2_2_filter_size=(3, 3), conv2_2_pad=(1, 1),
-        pool2_pool_size=(3, 3), pool2_stride=(2, 2),
-        conv3_1_num_filters=256, conv3_1_filter_size=(3, 3), conv3_1_pad=(1, 1),
-        conv3_2_num_filters=256, conv3_2_filter_size=(3, 3), conv3_2_pad=(1, 1),
-        conv3_3_num_filters=256, conv3_3_filter_size=(3, 3), conv3_3_pad=(1, 1),
-        pool3_pool_size=(3, 3), pool3_stride=(2, 2),
-        conv4_1_num_filters=196, conv4_1_filter_size=(3, 3), conv4_1_pad=(1, 1),
-        conv4_2_num_filters=196, conv4_2_filter_size=(3, 3), conv4_2_pad=(1, 1),
-        conv4_3_num_filters=196, conv4_3_filter_size=(3, 3), conv4_3_pad=(1, 1),
-        conv4_4_num_filters=196, conv4_4_filter_size=(3, 3), conv4_4_pad=(1, 1),
-        pool4_pool_size=(2, 2), pool4_stride=(2, 2),
-        conv1_1_W=Orthogonal(gain=1.0),
-        conv1_2_W=Orthogonal(gain=1.0),
-        conv2_1_W=Orthogonal(gain=1.0),
-        conv2_2_W=Orthogonal(gain=1.0),
-        conv3_1_W=Orthogonal(gain=1.0),
-        conv3_2_W=Orthogonal(gain=1.0),
-        conv3_3_W=Orthogonal(gain=1.0),
-        conv4_1_W=Orthogonal(gain=1.0),
-        conv4_2_W=Orthogonal(gain=1.0),
-        conv4_3_W=Orthogonal(gain=1.0),
-        conv4_4_W=Orthogonal(gain=1.0),
-        dense1_num_units=4096, dense2_num_units=2048, dense3_num_units=512,
-        # dense1_nonlinearity=lasagne.nonlinearities.rectify,
-        # dense2_nonlinearity=lasagne.nonlinearities.rectify,
-        dense3_nonlinearity=lasagne.nonlinearities.sigmoid,
-        # output layer uses identity function
-        output_nonlinearity=None,
-        output_num_units=4,
-
-        # optimization method:
-        update=nesterov_momentum,
-        update_learning_rate=0.001,
-        update_momentum=0.9,
-
-        batch_iterator_train=custom_batch_iterator(batch_size=32),
-        batch_iterator_test=custom_batch_iterator(batch_size=32),
-        on_epoch_finished=[plot_learning_curve],
-        regression=True,
-        max_epochs=max_epochs,
-        verbose=1,
-    )
-    return net1
-
-
-def plot_learning_curve(_, history, save=True):
-    arr = np.asarray(
-        map(lambda k: [k['epoch'], k['train_loss'], k['valid_loss']], history))
-    plt.figure()
-    plt.plot(arr[:, 0], arr[:, 1], 'r', marker='o',
-             label='Training loss', linewidth=2.0)
-    plt.plot(arr[:, 0], arr[:, 2], 'b', marker='o',
-             label='Validation loss', linewidth=2.0)
-    plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.ylim([0.0, np.max(arr[:, 1:]) * 1.3])
-    plt.title('Learning curve')
-    plt.legend()
-    if save:
-        plt.savefig('learning_curve.png')
-        plt.close()
