@@ -12,7 +12,7 @@ from datetime import datetime
 import cPickle as pickle
 
 from utils import get_file_list
-from models import nnet_4c3d_1233_convs_layer, nnet_4c3d_1234_convs_layer
+from models import *
 from helper import save_model_params, plot_weight_matrix_grid, plot_learning_curve
 
 mumbai = timezone('Asia/Kolkata')
@@ -93,20 +93,21 @@ if __name__ == '__main__':
     parser.add_argument('--train_folder', type=str)
     parser.add_argument('--train_csv', type=str)
     parser.add_argument('--test_csv', type=str)
-    parser.add_argument('--config', type=str,
+    parser.add_argument('--config', type=str, choices=NET_CONFIGS,
                         default='nnet_4c3d_1233_convs_layer')
     parser.add_argument('-e', '--epochs', type=int, default=30)
     parser.add_argument('-n', '--name', type=str)
     parser.add_argument('--pretrained-model', type=str, default=None)
     parser.add_argument('--debug', action='store_true')
-    parser.add_argument('--augment', action='store_true')
+    parser.add_argument('--no-augment', action='store_true')
     args = parser.parse_args()
-    if not args.augment:
+    if args.no_augment:
         train_preprocessed_img_lazy_batch(args.train_folder, max_epochs=args.epochs,
                                           name=args.name, config=args.config, debug=args.debug)
     else:
         train_original_imgs_with_augmentation(args.train_csv, args.test_csv, args.epochs, args.config,
-                                              pretrained_model=args.pretrained_model, name=args.name, debug=args.debug)
+                                              pretrained_model=args.pretrained_model,
+                                              name=args.name, debug=args.debug)
 
 # Notes
 # python fd.py train/ -e 100 -n vgg_like_2

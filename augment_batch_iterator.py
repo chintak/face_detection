@@ -21,13 +21,12 @@ class AugmentBatchIterator(BatchIterator):
 
     def compute_scale_factor(self, img, face_width, hc, wc, high_scale=None, low_scale=None):
         # Possible scales of computation
+        high_scale = min(high_scale or self.MAX_FACE_SIZE, self.MAX_FACE_SIZE)
+        high_scale = high_scale / 2. / face_width
+        low_scale = max(low_scale or self.MIN_FACE_SIZE, self.MIN_FACE_SIZE)
+        low_scale = low_scale / 2. / face_width
         assert high_scale > low_scale, "Same scale detected %.3f, %.3f" % (
             low_scale, high_scale)
-        high_scale = high_scale or min(high_scale, self.MAX_FACE_SIZE)
-        high_scale = high_scale / 2. / face_width
-        low_scale = low_scale or max(low_scale, self.MIN_FACE_SIZE)
-        low_scale = low_scale / 2. / face_width
-        assert high_scale > low_scale, ""
         scale_comp = self.rng.choice(
             np.arange(low_scale, high_scale, (high_scale - low_scale) / 100), 1)[0]
 
@@ -76,16 +75,16 @@ class AugmentBatchIterator(BatchIterator):
         wc, hc = (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2
         face_width = (bb[3] - bb[1]) / 2
         # Old approach: scale and then translate
-        # res, new_face_width, shc, swc = self.compute_scale_factor(
-        #     img, face_width, hc, wc)
-        # thc, twc = self.compute_translation(new_face_width, shc, swc)
-        # New approach: translate and then scale
-        thc, twc = self.compute_translation(face_width, hc, wc,
-                                            min_pad=self.MIN_FACE_SIZE + 10)
-        high_scale = np.min([thc - 5, h0 - thc - 5, twc - 5, w0 - twc - 5])
         res, new_face_width, shc, swc = self.compute_scale_factor(
-            img, face_width, hc, wc,
-            high_scale=high_scale, low_scale=None)
+            img, face_width, hc, wc)
+        thc, twc = self.compute_translation(new_face_width, shc, swc)
+        # New approach: translate and then scale
+        # thc, twc = self.compute_translation(face_width, hc, wc,
+        #                                     min_pad=self.MIN_FACE_SIZE + 10)
+        # high_scale = np.min([thc - 5, h0 - thc - 5, twc - 5, w0 - twc - 5])
+        # res, new_face_width, shc, swc = self.compute_scale_factor(
+        #     img, face_width, hc, wc,
+        #     high_scale=high_scale, low_scale=None)
         out_bgr, new_bb = self.copy_source_to_target(res, new_face_width,
                                                      shc, swc, thc, twc)
 

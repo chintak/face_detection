@@ -1,8 +1,27 @@
+import matplotlib as mpl
+mpl.use('Agg')
 import numpy as np
 import lasagne
 from nolearn.lasagne import NeuralNet
 import cPickle as pickle
 from models import *
+from mpl_toolkits.axes_grid1 import AxesGrid
+
+
+class AdjustVariable(object):
+
+    def __init__(self, name, start=0.01, stop=0.0001):
+        self.name = name
+        self.start, self.stop = start, stop
+        self.ls = None
+
+    def __call__(self, nn, train_history):
+        if self.ls is None:
+            self.ls = np.linspace(self.start, self.stop, 100)
+
+        epoch = train_history[-1]['epoch']
+        new_value = np.float32(self.ls[epoch - 1])
+        getattr(nn, self.name).set_value(new_value)
 
 
 def load_network(fname, config="nnet_4c3d_1233_convs_layer", batch_iterator="BatchIterator"):
