@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 
-def plot_face_bb(p, bb, scale=True, path=True):
+def plot_face_bb(p, bb, scale=True, path=True, plot=True):
     if path:
         im = cv2.imread(p)
     else:
@@ -18,5 +18,8 @@ def plot_face_bb(p, bb, scale=True, path=True):
         cv2.rectangle(im, (int(bb[0]), int(bb[1])), (int(bb[2]), int(bb[3])),
                       (255, 255, 0), thickness=4)
         print "no"
-    plt.figure()
-    plt.imshow(im[:, :, ::-1])
+    if plot:
+        plt.figure()
+        plt.imshow(im[:, :, ::-1])
+    else:
+        return im[:, :, ::-1]

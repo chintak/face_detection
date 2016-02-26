@@ -12,7 +12,8 @@ from datetime import datetime
 import cPickle as pickle
 
 from utils import get_file_list
-from models import nnet_4c3d_1233_convs_layer, nnet_4c3d_1234_convs_layer, save_model_params
+from models import nnet_4c3d_1233_convs_layer, nnet_4c3d_1234_convs_layer
+from helper import save_model_params, plot_weight_matrix_grid, plot_learning_curve
 
 mumbai = timezone('Asia/Kolkata')
 m_time = datetime.now(mumbai)
@@ -29,19 +30,26 @@ def train(X, y, config, max_epochs, batch_iterator='BatchIterator',
 
     print 'Model name: %s' % param_dump_folder
     print 'Debug mode:', debug
-    debug = False
     # Load the net and add a function to save the params after every epoch
     nnet = globals()[config](batch_iterator, max_epochs)
     func_save_model = lambda n, h: save_model_params(
         n, h, param_dump_folder, debug)
     nnet.on_epoch_finished.append(func_save_model)
+    func_learning_curve = lambda n, h: plot_learning_curve(
+        n, h, param_dump_folder, debug)
+    nnet.on_epoch_finished.append(func_learning_curve)
+    # func_viz_weights = lambda n, h: plot_weight_matrix_grid(
+    #     n, h, param_dump_folder, debug)
+    # nnet.on_epoch_finished.append(func_viz_weights)
 
-    if pretrained_model is not None:
-        pretrained_weights = pickle.load(open(pretrained_model, 'rb'))
-        nnet.load_params_from(pretrained_weights)
     print 'Config: %s' % config
     print 'Max num epochs: %d' % nnet.max_epochs
     print "Dataset loaded, shape:", X_t.shape, y_t.shape
+    print "Loading pretrained model %s ..." % pretrained_model
+    if pretrained_model is not None:
+        pretrained_weights = pickle.load(open(pretrained_model, 'rb'))
+        nnet.load_params_from(pretrained_weights)
+    print "Finished loading"
     # Train
     if not debug:
         if not os.path.exists(param_dump_folder):
@@ -50,12 +58,11 @@ def train(X, y, config, max_epochs, batch_iterator='BatchIterator',
         nnet.fit(X_t, y_t)
     except KeyboardInterrupt:
         pass
-    debug = True
     if not debug:
         nnet.save_params_to(os.path.join(
             param_dump_folder, 'model_final.pkl'))
-        with open(os.path.join(param_dump_folder, 'full_nnet.pkl'), 'wb') as f:
-            pickle.dump(nnet, f, -1)
+        # with open(os.path.join(param_dump_folder, 'full_nnet.pkl'), 'wb') as f:
+        #     pickle.dump(nnet, f, -1)
 
 
 def train_original_imgs_with_augmentation(train_csv, test_csv, max_epochs, config,
@@ -91,8 +98,6 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--epochs', type=int, default=30)
     parser.add_argument('-n', '--name', type=str)
     parser.add_argument('--pretrained-model', type=str, default=None)
-    parser.add_argument('--pretrained-model-config', type=str,
-                        default='nnet_4c3d_1233_convs_layer')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--augment', action='store_true')
     args = parser.parse_args()
