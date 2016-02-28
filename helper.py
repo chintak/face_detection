@@ -5,7 +5,27 @@ import lasagne
 from nolearn.lasagne import NeuralNet
 import cPickle as pickle
 from models import *
+import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import AxesGrid
+
+
+class StepVariableUpdate(object):
+
+    def __init__(self, name, changes={}):
+        self.name = name
+        assert type(changes) == dict, (
+            "Expected: dictionary, "
+            "with keys denoting the epoch and values denoting the changed value."
+        )
+        self.changes = changes
+        self.epochs = sorted(changes.keys())
+
+    def __call__(self, nn, train_history):
+        epoch = train_history[-1]['epoch']
+        if epoch in self.epochs:
+            new_value = np.float32(self.changes[epoch])
+            print "Update: learning rate from %f to %f" % (getattr(nn, self.name).get_value(), new_value)
+            getattr(nn, self.name).set_value(new_value)
 
 
 class AdjustVariable(object):
