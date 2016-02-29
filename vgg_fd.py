@@ -75,7 +75,7 @@ def train_original_imgs_with_augmentation(train_csv, test_csv, max_epochs, confi
     y = np.asarray(y_l)
     with open('aug.csv', mode='w', buffering=0) as f:
         f.write("r,c,width\n")
-    train(X, y, config, max_epochs, 'AugmentBatchIterator',
+    train(X, y, config, max_epochs, 'VggFeatBatchIterator',
           pretrained_model, name, debug)
 
 

@@ -4,6 +4,7 @@ from joblib import Parallel, delayed
 import lmdb
 from utils import get_file_list
 import caffe
+from pandas import read_csv
 
 
 def _write_batch_lmdb(db, batch):
@@ -81,7 +82,26 @@ def main(root_folder, batch_size=256, train_split=0.2):
     train_bboxes = bboxes[idx[num_val:]]
     val_fnames = fnames[idx[:num_val]]
     val_bboxes = bboxes[idx[:num_val]]
-    print "%d training samples and %d validation samples" % (train_fnames.shape[0], val_fnames.shape[0])
+    create_train_val_lmdbs(train_fnames, train_bboxes,
+                           val_fnames, val_bboxes, batch_size)
+
+
+def train_val_file(train_csv, val_csv, batch_size=256):
+    dft = read_csv(train_csv, sep='\t')
+    dft['bbox'] = map(lambda ks: [np.float32(k)
+                                  for k in ks.split(',')], dft['bbox'])
+    dfv = read_csv(val_csv, sep='\t')
+    dfv['bbox'] = map(lambda ks: [np.float32(k)
+                                  for k in ks.split(',')], dfv['bbox'])
+    create_train_val_lmdbs(dft.name, dft.bbox,
+                           dfv.name, dfv.bbox, batch_size)
+
+
+def create_train_val_lmdbs(train_fnames, train_bboxes,
+                           val_fnames, val_bboxes,
+                           batch_size):
+    print "%d training samples and %d validation samples" % (
+        train_fnames.shape[0], val_fnames.shape[0])
     # Create (key, value) pairs for storing in db
     X_t = []
     y_t = []
@@ -121,5 +141,6 @@ def main(root_folder, batch_size=256, train_split=0.2):
     val_label_db.close()
 
 if __name__ == '__main__':
-    root_folder = './train'
-    main(root_folder, 1024, 0.2)
+    root_folder = '../face_detection_gtx/train'
+    train_val_file('data/train.csv', 'data/val.csv', 1024)
+    # main(root_folder, 1024, 0.2)
