@@ -92,15 +92,14 @@ def config_4c_1234_3d_smoothl1_lr_step(batch_iterator="BatchIterator", max_epoch
 
         # optimization method:
         update=nesterov_momentum,
-        update_learning_rate=theano.shared(np.float32(0.001)),
+        update_learning_rate=theano.shared(np.float32(0.0001)),
         update_momentum=theano.shared(np.float32(0.9)),
 
         batch_iterator_train=custom_batch_iterator(batch_size=72),
         batch_iterator_test=custom_batch_iterator(batch_size=48),
         on_epoch_finished=[
             StepVariableUpdate('update_learning_rate', changes={
-                5: 0.0001,
-                35: 0.00001
+                30: 0.00005
             }),
             AdjustVariable('update_momentum', start=0.9, stop=0.98)
         ],
