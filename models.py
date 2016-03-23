@@ -69,10 +69,10 @@ def config_2c_2_2d_smoothl1_lr_step(batch_iterator="BatchIterator", max_epochs=3
         batch_iterator_train=custom_batch_iterator(batch_size=32),
         batch_iterator_test=custom_batch_iterator(batch_size=16),
         on_epoch_finished=[
-            StepVariableUpdate('update_learning_rate', changes={
-                10: 0.0001,
-                40: 0.0001
-            }),
+            # StepVariableUpdate('update_learning_rate', changes={
+            #     10: 0.0001,
+            #     40: 0.0001
+            # }),
             StepVariableUpdate('update_momentum', changes={
                 10: 0.95,
                 40: 0.975

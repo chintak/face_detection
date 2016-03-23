@@ -57,6 +57,7 @@ def train(X, y, config, max_epochs, batch_iterator='BatchIterator',
     try:
         nnet.fit(X_t, y_t)
     except KeyboardInterrupt:
+        print "Interrupting... Saving the final param model."
         pass
     if not debug:
         nnet.save_params_to(os.path.join(
